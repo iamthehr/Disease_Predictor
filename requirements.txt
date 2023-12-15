@@ -5,3 +5,5 @@ xgboost
 scikit-learn
 fastapi
 uvicorn[standard]
+keras
+Pillow

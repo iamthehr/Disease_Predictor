@@ -3,11 +3,19 @@ import numpy as np
 import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel
+from PIL import Image
+import requests
 import pickle
 from sklearn.preprocessing import LabelEncoder
 from joblib import load
+import urllib3
 from xgboost import XGBClassifier
 from fastapi.middleware.cors import CORSMiddleware
+from keras.models import load_model
+import keras.utils as image
+from io import BytesIO
+import cv2 as cv
+
 
 le = load('label_encoder/label_encoder.joblib')
 symptoms_list = ['itching', 'skin_rash', 'nodal_skin_eruptions', 'continuous_sneezing', 'shivering', 'chills', 'joint_pain', 'stomach_pain', 'acidity', 'ulcers_on_tongue', 'muscle_wasting', 'vomiting', 'burning_micturition', 'spotting_ urination', 'fatigue', 'weight_gain', 'anxiety', 'cold_hands_and_feets', 'mood_swings', 'weight_loss', 'restlessness', 'lethargy', 'patches_in_throat', 'irregular_sugar_level', 'cough', 'high_fever', 'sunken_eyes', 'breathlessness', 'sweating', 'dehydration', 'indigestion', 'headache', 'yellowish_skin', 'dark_urine', 'nausea', 'loss_of_appetite', 'pain_behind_the_eyes', 'back_pain', 'constipation', 'abdominal_pain', 'diarrhoea', 'mild_fever', 'yellow_urine', 'yellowing_of_eyes', 'acute_liver_failure', 'fluid_overload', 'swelling_of_stomach', 'swelled_lymph_nodes', 'malaise', 'blurred_and_distorted_vision', 'phlegm', 'throat_irritation', 'redness_of_eyes', 'sinus_pressure', 'runny_nose', 'congestion', 'chest_pain', 'weakness_in_limbs', 'fast_heart_rate', 'pain_during_bowel_movements', 'pain_in_anal_region', 'bloody_stool', 'irritation_in_anus', 'neck_pain', 'dizziness', 'cramps', 'bruising', 'obesity', 'swollen_legs', 'swollen_blood_vessels', 'puffy_face_and_eyes', 'enlarged_thyroid',
@@ -30,11 +38,22 @@ app.add_middleware(
 )
 
 
+def loadImage(URL):
+    with urllib3.request.urlopen(URL) as url:
+        img = image.load_img(BytesIO(url.read()), target_size=(125, 125))
+
+    return image.img_to_array(img)
+
+
 class Item(BaseModel):
     Age: int | None = None
     Gender: str | None = None
     Severity: str | None = None
     Symptoms: list[str] = []
+
+
+class img(BaseModel):
+    image: str | None = None
 
 
 class response(BaseModel):
@@ -55,15 +74,6 @@ def read_item(item_id: int, q: Union[str, None] = None):
 @app.post("/predict", response_model=response,)
 def predict(item: Item):
     print(item.Age)
-    # final_list = item.Symptoms
-    # prediction_value = [0 for i in range(131)]
-    # for sym in final_list:
-    #     index = symptoms_list.index(sym)
-    #     prediction_value[index] = 1
-    # prediction_value = pd.DataFrame(prediction_value).T
-    # y_pred = xgbmodel.predict(prediction_value)
-    # print("Disease_Prediction")
-    # result = le.classes_[y_pred[0]]
     final_list = item.Symptoms
     prediction_value = [0 for i in range(131)]
     for sym in final_list:
@@ -83,3 +93,33 @@ def predict(item: Item):
     Probability = result[1]
 
     return {"Disease": Disease, "Probability": Probability}
+
+
+@app.post("/predict_image",)
+def predict_image(item: img):
+    print(item.image)
+
+    # Load the model and label encoder
+    model = load_model("model/model_herb.h5")
+    labels = load("label_encoder/labels_herb.joblib")
+
+    # Download and open the image
+    response = requests.get(item.image, stream=True, verify=False)
+    img = Image.open(BytesIO(response.content))
+    img = img.resize((150, 150))
+
+    # Display the image (optional)
+    img.show()
+
+    # Convert the image to a NumPy array
+    test_image = image.img_to_array(img)
+    test_image = np.expand_dims(test_image, axis=0)
+
+    # Make the prediction
+    result = model.predict(test_image)
+
+    # Get the predicted label
+    prediction = labels[np.argmax(result)]
+    print(prediction)
+
+    return {"image": prediction}
