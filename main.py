@@ -38,7 +38,8 @@ class Item(BaseModel):
 
 
 class response(BaseModel):
-    Disease: str | None = None
+    Disease: list[str] = []
+    Probability: list[float] = []
 
 
 @app.get("/")
@@ -54,13 +55,31 @@ def read_item(item_id: int, q: Union[str, None] = None):
 @app.post("/predict", response_model=response,)
 def predict(item: Item):
     print(item.Age)
+    # final_list = item.Symptoms
+    # prediction_value = [0 for i in range(131)]
+    # for sym in final_list:
+    #     index = symptoms_list.index(sym)
+    #     prediction_value[index] = 1
+    # prediction_value = pd.DataFrame(prediction_value).T
+    # y_pred = xgbmodel.predict(prediction_value)
+    # print("Disease_Prediction")
+    # result = le.classes_[y_pred[0]]
     final_list = item.Symptoms
     prediction_value = [0 for i in range(131)]
     for sym in final_list:
         index = symptoms_list.index(sym)
         prediction_value[index] = 1
     prediction_value = pd.DataFrame(prediction_value).T
-    y_pred = xgbmodel.predict(prediction_value)
-    print("Disease_Prediction")
-    result = le.classes_[y_pred[0]]
-    return {"Disease": result}
+    predicted_proba = xgbmodel.predict_proba(prediction_value)
+    top_three = []
+    class_prob = [(le.classes_[i], prob)
+                  for i, prob in enumerate(predicted_proba[0])]
+    sorted_classes = sorted(class_prob, key=lambda x: x[1], reverse=True)[:3]
+    print(sorted_classes)
+    # top_three.append(sorted_classes)
+    transpose_list = list(zip(*sorted_classes))
+    result = [list(i) for i in transpose_list]
+    Disease = result[0]
+    Probability = result[1]
+
+    return {"Disease": Disease, "Probability": Probability}
