@@ -9,4 +9,6 @@ keras
 Pillow
 requests
 tensorflow
+opencv-python
+
 
