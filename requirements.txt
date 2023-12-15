@@ -8,4 +8,4 @@ uvicorn[standard]
 keras
 Pillow
 requests
-```
+
