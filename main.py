@@ -14,7 +14,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from keras.models import load_model
 import keras.utils as image
 from io import BytesIO
-import cv2 as cv
 
 
 le = load('label_encoder/label_encoder.joblib')
@@ -57,6 +56,9 @@ class img(BaseModel):
 
 
 class response(BaseModel):
+    Age: int | None = None
+    Gender: str | None = None
+    Severity: str | None = None
     Disease: list[str] = []
     Probability: list[float] = []
 
@@ -92,7 +94,7 @@ def predict(item: Item):
     Disease = result[0]
     Probability = result[1]
 
-    return {"Disease": Disease, "Probability": Probability}
+    return {"Age": item.Age, "Gender": item.Gender, "Severity": item.Severity, "Disease": Disease, "Probability": Probability}
 
 
 @app.post("/predict_image",)
