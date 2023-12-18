@@ -59,6 +59,7 @@ class response(BaseModel):
     Age: int | None = None
     Gender: str | None = None
     Severity: str | None = None
+    Symptoms: list[str] = []
     Disease: list[str] = []
     Probability: list[float] = []
 
@@ -94,7 +95,7 @@ def predict(item: Item):
     Disease = result[0]
     Probability = result[1]
 
-    return {"Age": item.Age, "Gender": item.Gender, "Severity": item.Severity, "Disease": Disease, "Probability": Probability}
+    return {"Age": item.Age, "Gender": item.Gender, "Severity": item.Severity, "Symptoms": item.Symptoms, "Disease": Disease, "Probability": Probability}
 
 
 @app.post("/predict_image",)
