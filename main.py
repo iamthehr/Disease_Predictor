@@ -26,6 +26,8 @@ origins = [
     "https://localhost.tiangolo.com",
     "http://localhost",
     "http://localhost:3000",
+    "http://192.168.67.39:3000",
+    "https://jocular-cactus-b39620.netlify.app"
 ]
 
 app.add_middleware(
@@ -103,16 +105,16 @@ def predict_image(item: img):
     print(item.image)
 
     # Load the model and label encoder
-    model = load_model("model/model_herb.h5")
-    labels = load("label_encoder/labels_herb.joblib")
+    model = load_model("model/model_herb_new.h5")
+    labels = load("label_encoder/labels_herb_new.joblib")
 
     # Download and open the image
     response = requests.get(item.image, stream=True, verify=False)
     img = Image.open(BytesIO(response.content))
-    img = img.resize((150, 150))
+    img = img.resize((224, 224))
 
     # Display the image (optional)
-    img.show()
+    # img.show()
 
     # Convert the image to a NumPy array
     test_image = image.img_to_array(img)
@@ -125,4 +127,4 @@ def predict_image(item: img):
     prediction = labels[np.argmax(result)]
     print(prediction)
 
-    return {"image": prediction}
+    return {"image": prediction[1]}
