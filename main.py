@@ -27,7 +27,8 @@ origins = [
     "http://localhost",
     "http://localhost:3000",
     "http://192.168.67.39:3000",
-    "https://jocular-cactus-b39620.netlify.app"
+    "https://jocular-cactus-b39620.netlify.app",
+    "https://ayurvaidyadeployment-5t6h.vercel.app"
 ]
 
 app.add_middleware(
